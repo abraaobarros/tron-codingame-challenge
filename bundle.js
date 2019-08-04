@@ -3,6 +3,14 @@
 const height = 10;
 const width = 30;
 
+const getNumberPlayers = (linestream = "") => {
+  return parseInt(linestream[0]);
+};
+
+const myPlayerNumber = (linestream = "") => {
+  return parseInt(linestream[1]);
+};
+
 const isOut = (x, y) => {
   return x < 0 || x >= width || y < 0 || y >= height;
 };
@@ -93,8 +101,8 @@ var other_path = [[1, 1]];
 
 while (true) {
   var inputs = readline().split(" ");
-  const N = parseInt(inputs[0]); // total number of players (2 to 4).
-  const P = parseInt(inputs[1]); // your player number (0 to 3).
+  const N = getNumberPlayers(inputs);
+  const P = myPlayerNumber(inputs);
   for (let i = 0; i < N; i++) {
     var inputs = readline().split(" ");
     const X0 = parseInt(inputs[0]);

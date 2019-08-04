@@ -1,4 +1,5 @@
 import { width, height } from "./contants";
+import { getNumberPlayers, myPlayerNumber, getPlayerMove } from "./runner";
 
 const isBorder = (x, y) => {
   return x === 0 || x === width || y === 0 || y === height;
@@ -93,15 +94,11 @@ var my_path = [[1, 1]];
 var other_path = [[1, 1]];
 
 while (true) {
-  var inputs = readline().split(" ");
-  const N = parseInt(inputs[0]); // total number of players (2 to 4).
-  const P = parseInt(inputs[1]); // your player number (0 to 3).
+  var inputs = readline();
+  const N = getNumberPlayers(inputs);
+  const P = myPlayerNumber(inputs);
   for (let i = 0; i < N; i++) {
-    var inputs = readline().split(" ");
-    const X0 = parseInt(inputs[0]);
-    const Y0 = parseInt(inputs[1]);
-    const X1 = parseInt(inputs[2]);
-    const Y1 = parseInt(inputs[3]);
+    const [X0, Y0, X1, Y1] = getPlayerMove(readline());
     if (P === i) {
       my_path.unshift([X1, Y1]);
     } else {
