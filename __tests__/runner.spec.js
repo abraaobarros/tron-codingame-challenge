@@ -2,8 +2,8 @@ import {
   getNumberPlayers,
   myPlayerNumber,
   getPlayerMove,
-  getOccupied,
-  printBoard
+  printBoard,
+  setPlayerMove
 } from "../src/runner";
 
 describe("Runner main", () => {
@@ -15,6 +15,8 @@ describe("Runner main", () => {
 
   it("Add elements to Board", () => {
     console.log(printBoard());
-    expect(getOccupied());
+    expect(setPlayerMove(0, 0, 1));
+    expect(setPlayerMove(3, 3, 1));
+    console.log(printBoard());
   });
 });

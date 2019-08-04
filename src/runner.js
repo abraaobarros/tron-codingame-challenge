@@ -16,21 +16,26 @@ var board = {
   1: [],
   2: [],
   3: [],
-  occupied: new Array(width * height).fill(0)
+  occupied: new Array(width * height).fill(".")
 };
 
-export const getOccupied = () => {
-  return board.occupied;
+export const setPlayerMove = (X, Y, player) => {
+  board.occupied = board.occupied.map((item, index) => {
+    if (index === X + Y * height) {
+      return player;
+    }
+    return item;
+  });
 };
 
 export const printBoard = () => {
-  var print = "";
-  for (let h = 0; h < height; h++) {
-    for (let w = 0; w < width; w++) {
-      print += board.occupied[w * h];
-    }
-    print += "\n";
-  }
+  var print = board.occupied.reduce(
+    (ant, atu) =>
+      ant.split("\n").join("").length % width !== 0
+        ? ant + atu
+        : ant + "\n" + atu,
+    ""
+  );
   return print;
 };
 
@@ -41,5 +46,6 @@ export const run = streamer => nextStep => {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
       board[player].push([X1, X0]);
     }
+    console.log(nextStep());
   }
 };
