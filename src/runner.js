@@ -20,8 +20,9 @@ var board = {
 };
 
 export const setPlayerMove = (X, Y, player) => {
+  board[player].push([X, Y]);
   board.occupied = board.occupied.map((item, index) => {
-    if (index === X + Y * height) {
+    if (index === X + Y * width) {
       return player;
     }
     return item;
@@ -29,14 +30,17 @@ export const setPlayerMove = (X, Y, player) => {
 };
 
 export const printBoard = () => {
-  var print = board.occupied.reduce(
-    (ant, atu) =>
-      ant.split("\n").join("").length % width !== 0
-        ? ant + atu
-        : ant + "\n" + atu,
-    ""
-  );
+  var print = "";
+  for (let h = 0; h < height; h++) {
+    print += printRow(h);
+    print += "\n";
+  }
   return print;
+};
+
+export const printRow = y => {
+  const line = board.occupied.slice(y * width, (y + 1) * width).join("");
+  return line;
 };
 
 export const run = streamer => nextStep => {
@@ -44,8 +48,10 @@ export const run = streamer => nextStep => {
     const line = streamer();
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
-      board[player].push([X1, X0]);
+      setPlayerMove(X0, Y0, player);
+      setPlayerMove(X1, Y1, player);
     }
-    console.log(nextStep());
+    console.error(printBoard());
+    console.log(nextStep(board));
   }
 };

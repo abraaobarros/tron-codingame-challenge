@@ -1,139 +1,60 @@
 'use strict';
 
-const height = 10;
+const height = 20;
 const width = 30;
 
 const getNumberPlayers = (linestream = "") => {
-  return parseInt(linestream[0]);
+  return parseInt(linestream.split(" ")[0]);
 };
 
-const myPlayerNumber = (linestream = "") => {
-  return parseInt(linestream[1]);
+const getPlayerMove = (linestream = "") =>
+  linestream.split(" ").map(coordinate => parseInt(coordinate));
+
+var board = {
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  occupied: new Array(width * height).fill(".")
 };
 
-const isOut = (x, y) => {
-  return x < 0 || x >= width || y < 0 || y >= height;
-};
-
-const next = (path, direction, count = 1) => {
-  switch (direction) {
-    case "LEFT":
-      return [path[0][0] - count, path[0][1]];
-    case "RIGHT":
-      return [path[0][0] + count, path[0][1]];
-    case "UP":
-      return [path[0][0], path[0][1] - count];
-    case "DOWN":
-      return [path[0][0], path[0][1] + count];
-  }
-};
-
-const turn = (direction, turn) => {
-  return d[(getDirection(direction) + turn + 4) % 4];
-};
-
-const d = {
-  0: "LEFT",
-  1: "UP",
-  2: "RIGHT",
-  3: "DOWN"
-};
-
-const getDirection = d => {
-  switch (d) {
-    case "LEFT":
-      return 0;
-    case "UP":
-      return 1;
-    case "RIGHT":
-      return 2;
-    case "DOWN":
-      return 3;
-  }
-};
-
-const hasOut = path => {
-  return path.some(([i, j]) => isOut(i, j));
-};
-
-const score = (path, direction, other_path = []) => {
-  return hasOut(path) ||
-    hasOut([next(path, direction), ...path]) ||
-    collide(other_path, next(path, direction)) ||
-    collide(other_path, path[0]) ||
-    collide(path, next(path, direction))
-    ? -1
-    : 0;
-};
-
-const collide = (path, [k, l]) => {
-  return path.some(([i, j]) => i === k && j === l);
-};
-
-const firstMove = (a, b) => {
-  var minD = 0;
-  var minMove = "LEFT";
-  ["LEFT", "UP", "DOWN", "RIGHT"].map(item => {
-    var va = distance(next([a], item), b);
-    if (va > minD) {
-      console.error(va);
-      minD = va;
-      minMove = item;
+const setPlayerMove = (X, Y, player) => {
+  board[player].push([X, Y]);
+  board.occupied = board.occupied.map((item, index) => {
+    if (index === X + Y * width) {
+      return player;
     }
+    return item;
   });
-  return [minMove, turn(minMove, 1)];
 };
 
-const init = () => {
-  if (!direction) {
-    [direction, turnDirection] = firstMove(my_path[0], other_path[0]);
+const printBoard = () => {
+  var print = "";
+  for (let h = 0; h < height; h++) {
+    print += printRow(h);
+    print += "\n";
+  }
+  return print;
+};
+
+const printRow = y => {
+  const line = board.occupied.slice(y * width, (y + 1) * width).join("");
+  return line;
+};
+
+const run = streamer => nextStep => {
+  while (true) {
+    const line = streamer();
+    for (let player = 0; player < getNumberPlayers(line); player++) {
+      const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
+      setPlayerMove(X0, Y0, player);
+      setPlayerMove(X1, Y1, player);
+    }
+    console.error(printBoard());
+    console.log(nextStep(board));
   }
 };
 
-const distance = (a, b) => {
-  const total = a[0] - b[0] + a[1] - b[1];
-  return total;
-};
-var direction;
-var turnDirection;
-var my_path = [[1, 1]];
-var other_path = [[1, 1]];
-
-while (true) {
-  var inputs = readline().split(" ");
-  const N = getNumberPlayers(inputs);
-  const P = myPlayerNumber(inputs);
-  for (let i = 0; i < N; i++) {
-    var inputs = readline().split(" ");
-    const X0 = parseInt(inputs[0]);
-    const Y0 = parseInt(inputs[1]);
-    const X1 = parseInt(inputs[2]);
-    const Y1 = parseInt(inputs[3]);
-    if (P === i) {
-      my_path.unshift([X1, Y1]);
-    } else {
-      other_path.unshift([X1, Y1]);
-      // console.error(other_path)
-    }
-  }
-
-  init();
-  console.error(distance(my_path[0], other_path[0]));
-
-  if (direction === turnDirection) {
-    if (score(my_path, turn(direction, 1), other_path) === 0) {
-      direction = turn(direction, 1);
-    } else {
-      direction = turn(direction, -1);
-    }
-  } else {
-    if (score(my_path, direction, other_path) === -1) {
-      if (score(my_path, turn(direction, 1), other_path) === 0) {
-        direction = turn(direction, 1);
-      } else {
-        direction = turn(direction, -1);
-      }
-    }
-  }
-  console.log(direction);
-}
+run(() => {
+  return readline();
+})(() => "UP");
