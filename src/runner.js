@@ -1,10 +1,12 @@
 import { width, height } from "./contants";
 
 export const getNumberPlayers = (linestream = "") => {
+  console.log(linestream);
   return parseInt(linestream.split(" ")[0]);
 };
 
 export const myPlayerNumber = (linestream = "") => {
+  console.log(linestream);
   return parseInt(linestream.split(" ")[1]);
 };
 
@@ -16,6 +18,7 @@ var board = {
   1: [],
   2: [],
   3: [],
+  me: 0,
   occupied: new Array(width * height).fill(".")
 };
 
@@ -46,12 +49,13 @@ export const printRow = y => {
 export const run = streamer => nextStep => {
   while (true) {
     const line = streamer();
+    board.me = myPlayerNumber(line);
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
       setPlayerMove(X0, Y0, player);
       setPlayerMove(X1, Y1, player);
     }
     console.error(printBoard());
-    console.log(nextStep(board));
+    nextStep(board);
   }
 };
