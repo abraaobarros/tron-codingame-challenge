@@ -9,24 +9,24 @@ export const inside = (list, node) =>
   list.filter(n => n[0] + n[1] * width === node[0] + node[1] * width).length !==
   0;
 
-const floodFill = (board, node, max_queue_size = 700) => {
-  let queue = [];
+const floodFill = (board, node, max_stack_size = 700) => {
+  let stack = [];
   let visited = [];
-  queue.push(node);
-  while (queue.length !== 0) {
-    let actual = queue.pop();
+  stack.push(node);
+  while (stack.length !== 0) {
+    let actual = stack.pop();
     let possibilities = Object.keys(directions).filter(dir =>
       canMove(board, actual, dir)
     );
     possibilities.map(item => {
       const next = move(actual, item);
       if (!inside(visited, next)) {
-        queue.push(next);
+        stack.push(next);
       }
     });
     visited.push(actual);
-    if (visited.length > max_queue_size) {
-      return max_queue_size;
+    if (visited.length > max_stack_size) {
+      return max_stack_size;
     }
   }
   return visited.length;
