@@ -1,35 +1,39 @@
 import { width, height } from "./contants";
 
 export const getNumberPlayers = (linestream = "") => {
-  console.log(linestream);
   return parseInt(linestream.split(" ")[0]);
 };
 
 export const myPlayerNumber = (linestream = "") => {
-  console.log(linestream);
   return parseInt(linestream.split(" ")[1]);
 };
 
 export const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
+export const setPlayerMove = (X, Y, player) => {
+  board[player].push([X, Y]);
+  board.occupied = board.occupied.map((item, index) => {
+    if (index === X + Y * width) {
+      if (board.occupied[index] !== ".") {
+        console.error("Essa casa já foi preenchida");
+        return player;
+      }
+      return player;
+    }
+    return item;
+  });
+};
+
+export const isOccupied = ([X, Y]) => board.occupied[X + Y * width] !== ".";
 var board = {
   0: [],
   1: [],
   2: [],
   3: [],
   me: 0,
-  occupied: new Array(width * height).fill(".")
-};
-
-export const setPlayerMove = (X, Y, player) => {
-  board[player].push([X, Y]);
-  board.occupied = board.occupied.map((item, index) => {
-    if (index === X + Y * width) {
-      return player;
-    }
-    return item;
-  });
+  occupied: new Array(width * height).fill("."),
+  isOccupied: isOccupied
 };
 
 export const printBoard = () => {

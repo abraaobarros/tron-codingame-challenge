@@ -1,16 +1,16 @@
 import { width, height } from "./contants";
 import { getNumberPlayers, myPlayerNumber, getPlayerMove, run } from "./runner";
 import bot from "./bot";
-import { readline, setNextStep } from "./helpers";
+import { setNextStep } from "./helpers";
 
 let nextStep = "UP";
 
-const gen = readline(20, 20);
+//const gen = readline(4, 30);
 
 run(() => {
-  return gen.next().value;
+  return readline();
 })(board => {
   nextStep = bot.nextStep(board);
-  setNextStep(nextStep);
   console.log(nextStep);
+  setNextStep(nextStep);
 });

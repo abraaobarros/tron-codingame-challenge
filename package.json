@@ -2,9 +2,10 @@
   "scripts": {
     "bundle": "rollup ./src/main.js --file bundle.js --format cjs --watch",
     "test": "jasmine __tests__/*",
-    "local": "npm run bundle | nodemon ./bundle.js "
+    "local": "nodemon ./bundle.js "
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.5.5",
     "babel-core": "^6.23.1",
     "babel-jest": "^24.8.0",
     "babel-plugin-external-helpers": "^6.22.0",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@babel/preset-env": "^7.5.5",
+    "@babel/runtime": "^7.5.5",
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-preset-env": "^1.7.0"
   },
