@@ -67,6 +67,35 @@ const run = streamer => nextStep => {
   }
 };
 
+let _nextStep = "UP";
+const setNextStep = nextStep => {
+  _nextStep = nextStep;
+};
+
+const rl = function*(x, y) {
+  while (true) {
+    yield "1 0";
+    switch (_nextStep) {
+      case "UP":
+        yield `${x} ${y} ${x} ${--y}`;
+        break;
+      case "LEFT":
+        yield `${x} ${y} ${--x} ${y}`;
+        break;
+      case "RIGHT":
+        yield `${x} ${y} ${++x} ${y}`;
+        break;
+      case "DOWN":
+        yield `${x} ${y} ${x} ${++y}`;
+        break;
+    }
+
+    if (isOutBoard([x, y])) throw "Saiu da parada";
+    sleep(1);
+    console.clear();
+  }
+};
+
 const move = ([x, y], step) => {
   switch (step) {
     case "UP":
@@ -81,6 +110,18 @@ const move = ([x, y], step) => {
   return [x, y];
 };
 
+const sleep = time => {
+  let c = 0;
+  for (var i = 0; i < time * 100000000; i++) {
+    c++;
+  }
+  console.log(c);
+};
+
+const distance = (A, B) => {
+  return Math.abs(A[0] - B[0] + A[1] - B[1]);
+};
+
 const isOutBoard = node => {
   return node[0] < 0 || node[1] < 0 || node[0] >= width || node[1] >= height;
 };
@@ -93,7 +134,7 @@ const inside = (list, node) =>
   list.filter(n => n[0] + n[1] * width === node[0] + node[1] * width).length !==
   0;
 
-const floodFill = (board, node, max_queue_size = 1000) => {
+const floodFill = (board, node, max_queue_size = 700) => {
   let queue = [];
   let visited = [];
   queue.push(node);
@@ -120,6 +161,11 @@ const lastMove = board => {
   return [...board[board.me]].pop();
 };
 
+//TODO works just for two bots
+const opponentLastMove = board => {
+  return [...board[board.me === 0 ? 1 : 0]].pop();
+};
+
 const canMove = (board, node, direction) => {
   return (
     !isOutBoard(move(node, direction)) &&
@@ -134,17 +180,30 @@ const directions = {
   LEFT: ["DOWN", "LEFT", "UP"]
 };
 
-let actualDirection = "LEFT";
+let actualDirection = null;
+
+const chooseBetterDirection = (board, moveA, moveB) => {
+  if (!opponentLastMove(board)) return 0;
+  const distA = distance(move(lastMove(board), moveA), opponentLastMove(board));
+  const distB = distance(move(lastMove(board), moveB), opponentLastMove(board));
+  return distB - distA;
+};
 
 const sortByFloodFill = (board, list) =>
   list.sort((moveA, moveB) => {
-    return (
-      floodFill(board, move(lastMove(board), moveA)) -
-      floodFill(board, move(lastMove(board), moveB))
-    );
+    const areaA = floodFill(board, move(lastMove(board), moveA));
+    const areaB = floodFill(board, move(lastMove(board), moveB));
+    if (areaA === areaB) {
+      return chooseBetterDirection(board, moveA, moveB);
+    }
+    return areaA - areaB;
   });
 
 const nextStep = board => {
+  if (!actualDirection) {
+    actualDirection = "LEFT";
+    return actualDirection;
+  }
   const next = directions[actualDirection].filter(m =>
     canMove(board, lastMove(board), m)
   );
@@ -156,11 +215,12 @@ var bot = { nextStep };
 
 let nextStep$1 = "UP";
 
-//const gen = readline(4, 30);
+const gen = rl(10, 20);
 
-run(() => {
-  return readline();
-})(board => {
+const streamer =  () => gen.next().value ;
+
+run(streamer)(board => {
   nextStep$1 = bot.nextStep(board);
+  setNextStep(nextStep$1);
   console.log(nextStep$1);
 });

@@ -5,7 +5,7 @@ export const setNextStep = nextStep => {
   _nextStep = nextStep;
 };
 
-export const readline = function*(x, y) {
+export const rl = function*(x, y) {
   while (true) {
     yield "1 0";
     const next = move([x, y], _nextStep);
@@ -50,6 +50,10 @@ const sleep = time => {
     c++;
   }
   console.log(c);
+};
+
+export const distance = (A, B) => {
+  return Math.abs(A[0] - B[0] + A[1] - B[1]);
 };
 
 export const isOutBoard = node => {
