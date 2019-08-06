@@ -14,41 +14,42 @@ const myPlayerNumber = (linestream = "") => {
 const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
-const setPlayerMove = (X, Y, player) => {
+const setPlayerMove = (board, X, Y, player) => {
   board[player].push([X, Y]);
   board.occupied = board.occupied.map((item, index) => {
     if (index === X + Y * width) {
       if (board.occupied[index] !== ".") {
-        console.error("Essa casa já foi preenchida");
         return player;
       }
       return player;
     }
     return item;
   });
+  return board
 };
 
-const isOccupied = ([X, Y]) => board.occupied[X + Y * width] !== ".";
+const isOccupied = (board) => ([X, Y]) => board.occupied[X + Y * width] !== ".";
+const cloneBoard = (board) => ({...board, occupied: [...board.occupied]});
 var board = {
   0: [],
   1: [],
   2: [],
   3: [],
+  4:[],
   me: 0,
   occupied: new Array(width * height).fill("."),
-  isOccupied: isOccupied
 };
 
-const printBoard = () => {
+const printBoard = (board) => {
   var print = "";
   for (let h = 0; h < height; h++) {
-    print += printRow(h);
+    print += printRow(board, h);
     print += "\n";
   }
   return print;
 };
 
-const printRow = y => {
+const printRow = (board, y) => {
   const line = board.occupied.slice(y * width, (y + 1) * width).join("");
   return line;
 };
@@ -59,10 +60,10 @@ const run = streamer => nextStep => {
     board.me = myPlayerNumber(line);
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
-      setPlayerMove(X0, Y0, player);
-      setPlayerMove(X1, Y1, player);
+      board = setPlayerMove(board, X0, Y0, player);
+      board = setPlayerMove(board,X1, Y1, player);
     }
-    console.error(printBoard());
+    console.error(printBoard(board));
     nextStep(board);
   }
 };
@@ -118,52 +119,79 @@ const sleep = time => {
   console.log(c);
 };
 
-const distance = (A, B) => {
-  return Math.abs(A[0] - B[0] + A[1] - B[1]);
-};
-
 const isOutBoard = node => {
   return node[0] < 0 || node[1] < 0 || node[0] >= width || node[1] >= height;
 };
 
 const willCollide = (board, node) => {
-  return board.isOccupied(node);
+  return isOccupied(board)(node);
 };
 
-const inside = (list, node) =>
-  list.filter(n => n[0] + n[1] * width === node[0] + node[1] * width).length !==
-  0;
+const inside = (board, node) => isOccupied(board)(node);
+  
 
-const floodFill = (board, node, max_queue_size = 700) => {
-  let queue = [];
-  let visited = [];
-  queue.push(node);
-  while (queue.length !== 0) {
-    let actual = queue.pop();
+const floodFill = (board, node, max_stack_size = 700) => {
+  let stack = [];
+  let visited = cloneBoard(board);
+  let count = 0;
+  stack.push(node);
+  while (stack.length !== 0) {
+    // console.clear()
+    let actual = stack.pop();
+    visited = setPlayerMove(visited, actual[0], actual[1], 4);
     let possibilities = Object.keys(directions).filter(dir =>
       canMove(board, actual, dir)
     );
     possibilities.map(item => {
       const next = move(actual, item);
       if (!inside(visited, next)) {
-        queue.push(next);
+        stack.push(next);
       }
     });
-    visited.push(actual);
-    if (visited.length > max_queue_size) {
-      return max_queue_size;
-    }
+    count++;
   }
-  return visited.length;
+  return count;
+};
+
+const flatCoordinate = (node) => node[0]+node[1]*width;
+/**
+ * 
+ * @param {Number} flat 
+ */
+const toNode = (flat) => [flat % width, (flat - (flat % width))/width];
+
+const bfs = (board, start, target, max_stack_size = 10000) => {
+  var queue = [];
+  var visited = cloneBoard(board);
+  queue.push([flatCoordinate(start)]);
+  while(queue.length){
+    const path = queue.shift();
+    const last = [...path].pop();
+    if (flatCoordinate(target)=== last){
+      return path
+    }
+    let possibilities = Object.keys(directions).filter(dir =>
+      canMove(visited, toNode(last), dir)
+    );
+    
+    possibilities.map(item => {
+      const lastNode = toNode(last);
+      const next = move([lastNode[0], lastNode[1]], item);
+      if (!inside(visited, next) && !path.includes(flatCoordinate(next))) {
+        queue.push([...path, flatCoordinate(next)]);
+      }
+    });
+    visited = setPlayerMove(visited, toNode(last)[0], toNode(last)[1], 4);
+    if (queue.length > max_stack_size ){
+      return -1
+    }
+    
+  }
+  return -1
 };
 
 const lastMove = board => {
   return [...board[board.me]].pop();
-};
-
-//TODO works just for two bots
-const opponentLastMove = board => {
-  return [...board[board.me === 0 ? 1 : 0]].pop();
 };
 
 const canMove = (board, node, direction) => {
@@ -180,29 +208,19 @@ const directions = {
   LEFT: ["DOWN", "LEFT", "UP"]
 };
 
-let actualDirection = null;
-
-const chooseBetterDirection = (board, moveA, moveB) => {
-  if (!opponentLastMove(board)) return 0;
-  const distA = distance(move(lastMove(board), moveA), opponentLastMove(board));
-  const distB = distance(move(lastMove(board), moveB), opponentLastMove(board));
-  return distB - distA;
-};
+let actualDirection = "LEFT";
 
 const sortByFloodFill = (board, list) =>
   list.sort((moveA, moveB) => {
     const areaA = floodFill(board, move(lastMove(board), moveA));
     const areaB = floodFill(board, move(lastMove(board), moveB));
-    if (areaA === areaB) {
-      return chooseBetterDirection(board, moveA, moveB);
-    }
     return areaA - areaB;
   });
 
 const nextStep = board => {
-  if (!actualDirection) {
-    actualDirection = "LEFT";
-    return actualDirection;
+  const move = getMovementToTarget(board,lastMove(board), [10,15]);
+  if(move){
+    return move
   }
   const next = directions[actualDirection].filter(m =>
     canMove(board, lastMove(board), m)
@@ -211,11 +229,20 @@ const nextStep = board => {
   return actualDirection;
 };
 
+const getMovementToTarget = (board, node, target) => {
+  const path = bfs(board, node, target);
+  let possibilities = Object.keys(directions).filter(dir =>
+    flatCoordinate(move(node, dir)) === path[1]
+  );
+  
+  return possibilities.pop()
+};
+
 var bot = { nextStep };
 
 let nextStep$1 = "UP";
 
-const gen = rl(10, 20);
+const gen = rl(10, 5);
 
 const streamer =  () => gen.next().value ;
 
