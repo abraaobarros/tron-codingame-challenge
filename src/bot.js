@@ -107,7 +107,7 @@ const sortByFloodFill = (board, list) =>
   });
 
 const nextStep = board => {
-  const move = getMovementToTarget(board,lastMove(board), [10,15])
+  const move = getMovementToTarget(board,lastMove(board), opponentLastMove(board))
   if(move){
     return move
   }
@@ -123,7 +123,6 @@ const getMovementToTarget = (board, node, target) => {
   let possibilities = Object.keys(directions).filter(dir =>
     flatCoordinate(move(node, dir)) === path[1]
   );
-  
   return possibilities.pop()
 }
 

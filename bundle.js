@@ -194,6 +194,11 @@ const lastMove = board => {
   return [...board[board.me]].pop();
 };
 
+//TODO works just for two bots
+const opponentLastMove = board => {
+  return [...board[board.me === 0 ? 1 : 0]].pop();
+};
+
 const canMove = (board, node, direction) => {
   return (
     !isOutBoard(move(node, direction)) &&
@@ -218,7 +223,7 @@ const sortByFloodFill = (board, list) =>
   });
 
 const nextStep = board => {
-  const move = getMovementToTarget(board,lastMove(board), [10,15]);
+  const move = getMovementToTarget(board,lastMove(board), opponentLastMove(board));
   if(move){
     return move
   }
@@ -234,7 +239,6 @@ const getMovementToTarget = (board, node, target) => {
   let possibilities = Object.keys(directions).filter(dir =>
     flatCoordinate(move(node, dir)) === path[1]
   );
-  
   return possibilities.pop()
 };
 
@@ -244,7 +248,7 @@ let nextStep$1 = "UP";
 
 const gen = rl(10, 5);
 
-const streamer =  () => gen.next().value ;
+const streamer =  () => readline();
 
 run(streamer)(board => {
   nextStep$1 = bot.nextStep(board);

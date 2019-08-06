@@ -7,7 +7,7 @@ let nextStep = "UP";
 
 const gen = rl(10, 5);
 
-const streamer = true ? () => gen.next().value : () => readline();
+const streamer = false ? () => gen.next().value : () => readline();
 
 run(streamer)(board => {
   nextStep = bot.nextStep(board);
