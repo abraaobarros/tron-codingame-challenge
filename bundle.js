@@ -128,7 +128,6 @@ const willCollide = (board, node) => {
 };
 
 const inside = (board, node) => isOccupied(board)(node);
-  
 
 const floodFill = (board, node, max_stack_size = 700) => {
   let stack = [];
@@ -153,41 +152,40 @@ const floodFill = (board, node, max_stack_size = 700) => {
   return count;
 };
 
-const flatCoordinate = (node) => node[0]+node[1]*width;
-/**
- * 
- * @param {Number} flat 
- */
-const toNode = (flat) => [flat % width, (flat - (flat % width))/width];
+const equal = (nodeA, nodeB) => {
+  try {
+    return nodeA[0] === nodeB[0] && nodeA[1] === nodeB[1];
+  } catch (e) {
+    return false;
+  }
+};
 
-const bfs = (board, start, target, max_stack_size = 10000) => {
+const bfs = (board, start, target, max_stack_size = width * height) => {
   var queue = [];
   var visited = cloneBoard(board);
-  queue.push([flatCoordinate(start)]);
-  while(queue.length){
+  queue.push([start]);
+  while (queue.length > 0) {
     const path = queue.shift();
-    const last = [...path].pop();
-    if (flatCoordinate(target)=== last){
-      return path
+    const current = [...path].pop();
+    if (equal(current, target)) {
+      return path;
     }
-    let possibilities = Object.keys(directions).filter(dir =>
-      canMove(visited, toNode(last), dir)
-    );
-    
-    possibilities.map(item => {
-      const lastNode = toNode(last);
-      const next = move([lastNode[0], lastNode[1]], item);
-      if (!inside(visited, next) && !path.includes(flatCoordinate(next))) {
-        queue.push([...path, flatCoordinate(next)]);
+    for (var i = 0; i < 4; i++) {
+      const dir = Object.keys(directions)[i];
+      if (canMove(visited, current, dir)) {
+        const next = move(current, dir);
+        queue.push([...path, next]);
+        if (equal(next, target)) {
+          return [...path, next];
+        }
+        visited = setPlayerMove(visited, next[0], next[1], 4);
       }
-    });
-    visited = setPlayerMove(visited, toNode(last)[0], toNode(last)[1], 4);
-    if (queue.length > max_stack_size ){
-      return -1
     }
-    
+    if (queue.length > max_stack_size) {
+      return -1;
+    }
   }
-  return -1
+  return -1;
 };
 
 const lastMove = board => {
@@ -196,6 +194,7 @@ const lastMove = board => {
 
 //TODO works just for two bots
 const opponentLastMove = board => {
+  return [20, 10];
   return [...board[board.me === 0 ? 1 : 0]].pop();
 };
 
@@ -223,9 +222,13 @@ const sortByFloodFill = (board, list) =>
   });
 
 const nextStep = board => {
-  const move = getMovementToTarget(board,lastMove(board), opponentLastMove(board));
-  if(move){
-    return move
+  const move = getMovementToTarget(
+    board,
+    lastMove(board),
+    opponentLastMove(board)
+  );
+  if (move) {
+    return move;
   }
   const next = directions[actualDirection].filter(m =>
     canMove(board, lastMove(board), m)
@@ -236,17 +239,18 @@ const nextStep = board => {
 
 const getMovementToTarget = (board, node, target) => {
   const path = bfs(board, node, target);
+  if (!path) return null;
   let possibilities = Object.keys(directions).filter(dir =>
-    flatCoordinate(move(node, dir)) === path[1]
+    equal(move(node, dir), path[1])
   );
-  return possibilities.pop()
+  return possibilities.pop();
 };
 
 var bot = { nextStep };
 
 let nextStep$1 = "UP";
 
-const gen = rl(10, 5);
+const gen = rl(10, 10);
 
 const streamer =  () => readline();
 

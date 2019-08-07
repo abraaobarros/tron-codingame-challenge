@@ -5,7 +5,7 @@ import { setNextStep, rl } from "./helpers";
 
 let nextStep = "UP";
 
-const gen = rl(10, 5);
+const gen = rl(10, 10);
 
 const streamer = false ? () => gen.next().value : () => readline();
 
