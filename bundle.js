@@ -14,17 +14,17 @@ const myPlayerNumber = (linestream = "") => {
 const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
+const clearPlayer = (board, player) => {
+  return board.occupied.map(i => i===player ? '.':i)
+};
+
 const setPlayerMove = (board, X, Y, player) => {
+  
   board[player].push([X, Y]);
-  board.occupied = board.occupied.map((item, index) => {
-    if (index === X + Y * width) {
-      if (board.occupied[index] !== ".") {
-        return player;
-      }
-      return player;
-    }
-    return item;
-  });
+  board.occupied[X + Y * width] = player;
+  if (X === -1 || Y === -1) {
+    board = clearPlayer(player);
+  }
   return board
 };
 
@@ -61,7 +61,7 @@ const run = streamer => nextStep => {
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
       board = setPlayerMove(board, X0, Y0, player);
-      board = setPlayerMove(board,X1, Y1, player);
+      board = setPlayerMove(board, X1, Y1, player);
     }
     console.error(printBoard(board));
     nextStep(board);
@@ -135,7 +135,6 @@ const floodFill = (board, node, max_stack_size = 700) => {
   let count = 0;
   stack.push(node);
   while (stack.length !== 0) {
-    // console.clear()
     let actual = stack.pop();
     visited = setPlayerMove(visited, actual[0], actual[1], 4);
     let possibilities = Object.keys(directions).filter(dir =>
@@ -145,6 +144,7 @@ const floodFill = (board, node, max_stack_size = 700) => {
       const next = move(actual, item);
       if (!inside(visited, next)) {
         stack.push(next);
+        visited = setPlayerMove(visited, actual[0], actual[1], 4);
       }
     });
     count++;

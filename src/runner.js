@@ -11,17 +11,17 @@ export const myPlayerNumber = (linestream = "") => {
 export const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
+export const clearPlayer = (board, player) => {
+  return board.occupied.map(i => i===player ? '.':i)
+}
+
 export const setPlayerMove = (board, X, Y, player) => {
+  
   board[player].push([X, Y]);
-  board.occupied = board.occupied.map((item, index) => {
-    if (index === X + Y * width) {
-      if (board.occupied[index] !== ".") {
-        return player;
-      }
-      return player;
-    }
-    return item;
-  });
+  board.occupied[X + Y * width] = player
+  if (X === -1 || Y === -1) {
+    board = clearPlayer(player);
+  }
   return board
 };
 
@@ -58,7 +58,7 @@ export const run = streamer => nextStep => {
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
       board = setPlayerMove(board, X0, Y0, player);
-      board = setPlayerMove(board,X1, Y1, player);
+      board = setPlayerMove(board, X1, Y1, player);
     }
     console.error(printBoard(board));
     nextStep(board);
