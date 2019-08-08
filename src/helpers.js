@@ -1,6 +1,6 @@
 import { height, width } from "./contants";
 
-let _nextStep = "UP";
+let _nextStep = "RIGHT";
 export const setNextStep = nextStep => {
   _nextStep = nextStep;
 };

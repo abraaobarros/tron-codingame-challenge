@@ -15,32 +15,37 @@ const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
 const clearPlayer = (board, player) => {
-  return board.occupied.map(i => i===player ? '.':i)
+  board.occupied = board.occupied.map(i => (i === player ? "." : i));
+  return board;
 };
 
 const setPlayerMove = (board, X, Y, player) => {
-  
-  board[player].push([X, Y]);
-  board.occupied[X + Y * width] = player;
   if (X === -1 || Y === -1) {
     board = clearPlayer(player);
   }
-  return board
+  board[player].push([X, Y]);
+  board.occupied[X + Y * width] = player;
+
+  return board;
 };
 
-const isOccupied = (board) => ([X, Y]) => board.occupied[X + Y * width] !== ".";
-const cloneBoard = (board) => ({...board, occupied: [...board.occupied]});
+const isOccupied = board => ([X, Y]) =>
+  board.occupied[X + Y * width] !== ".";
+const cloneBoard = board => ({
+  ...board,
+  occupied: [...board.occupied]
+});
 var board = {
   0: [],
   1: [],
   2: [],
   3: [],
-  4:[],
+  4: [],
   me: 0,
-  occupied: new Array(width * height).fill("."),
+  occupied: new Array(width * height).fill(".")
 };
 
-const printBoard = (board) => {
+const printBoard = board => {
   var print = "";
   for (let h = 0; h < height; h++) {
     print += printRow(board, h);
@@ -68,7 +73,7 @@ const run = streamer => nextStep => {
   }
 };
 
-let _nextStep = "UP";
+let _nextStep = "RIGHT";
 const setNextStep = nextStep => {
   _nextStep = nextStep;
 };
@@ -127,8 +132,6 @@ const willCollide = (board, node) => {
   return isOccupied(board)(node);
 };
 
-const inside = (board, node) => isOccupied(board)(node);
-
 const floodFill = (board, node, max_stack_size = 700) => {
   let stack = [];
   let visited = cloneBoard(board);
@@ -137,18 +140,16 @@ const floodFill = (board, node, max_stack_size = 700) => {
   while (stack.length !== 0) {
     let actual = stack.pop();
     visited = setPlayerMove(visited, actual[0], actual[1], 4);
-    let possibilities = Object.keys(directions).filter(dir =>
-      canMove(board, actual, dir)
-    );
-    possibilities.map(item => {
-      const next = move(actual, item);
-      if (!inside(visited, next)) {
+    Object.keys(directions).map(dir => {
+      if (canMove(visited, actual, dir)) {
+        const next = move(actual, dir);
         stack.push(next);
         visited = setPlayerMove(visited, actual[0], actual[1], 4);
       }
     });
     count++;
   }
+  console.log(count);
   return count;
 };
 
@@ -250,12 +251,13 @@ var bot = { nextStep };
 
 let nextStep$1 = "UP";
 
-const gen = rl(10, 10);
+const gen = rl(0, 0);
 
-const streamer =  () => readline();
+const streamer =  () => gen.next().value ;
 
 run(streamer)(board => {
   nextStep$1 = bot.nextStep(board);
+  console.log(nextStep$1);
   setNextStep(nextStep$1);
   console.log(nextStep$1);
 });

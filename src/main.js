@@ -5,12 +5,13 @@ import { setNextStep, rl } from "./helpers";
 
 let nextStep = "UP";
 
-const gen = rl(10, 10);
+const gen = rl(0, 0);
 
-const streamer = false ? () => gen.next().value : () => readline();
+const streamer = true ? () => gen.next().value : () => readline();
 
 run(streamer)(board => {
   nextStep = bot.nextStep(board);
+  console.log(nextStep);
   setNextStep(nextStep);
   console.log(nextStep);
 });

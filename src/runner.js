@@ -12,32 +12,37 @@ export const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
 export const clearPlayer = (board, player) => {
-  return board.occupied.map(i => i===player ? '.':i)
-}
+  board.occupied = board.occupied.map(i => (i === player ? "." : i));
+  return board;
+};
 
 export const setPlayerMove = (board, X, Y, player) => {
-  
-  board[player].push([X, Y]);
-  board.occupied[X + Y * width] = player
   if (X === -1 || Y === -1) {
     board = clearPlayer(player);
   }
-  return board
+  board[player].push([X, Y]);
+  board.occupied[X + Y * width] = player;
+
+  return board;
 };
 
-export const isOccupied = (board) => ([X, Y]) => board.occupied[X + Y * width] !== ".";
-export const cloneBoard = (board) => ({...board, occupied: [...board.occupied]})
+export const isOccupied = board => ([X, Y]) =>
+  board.occupied[X + Y * width] !== ".";
+export const cloneBoard = board => ({
+  ...board,
+  occupied: [...board.occupied]
+});
 var board = {
   0: [],
   1: [],
   2: [],
   3: [],
-  4:[],
+  4: [],
   me: 0,
-  occupied: new Array(width * height).fill("."),
+  occupied: new Array(width * height).fill(".")
 };
 
-export const printBoard = (board) => {
+export const printBoard = board => {
   var print = "";
   for (let h = 0; h < height; h++) {
     print += printRow(board, h);

@@ -16,18 +16,16 @@ const floodFill = (board, node, max_stack_size = 700) => {
   while (stack.length !== 0) {
     let actual = stack.pop();
     visited = setPlayerMove(visited, actual[0], actual[1], 4);
-    let possibilities = Object.keys(directions).filter(dir =>
-      canMove(board, actual, dir)
-    );
-    possibilities.map(item => {
-      const next = move(actual, item);
-      if (!inside(visited, next)) {
+    Object.keys(directions).map(dir => {
+      if (canMove(visited, actual, dir)) {
+        const next = move(actual, dir);
         stack.push(next);
         visited = setPlayerMove(visited, actual[0], actual[1], 4);
       }
     });
     count++;
   }
+  console.log(count);
   return count;
 };
 
