@@ -25,7 +25,6 @@ const floodFill = (board, node, max_stack_size = 700) => {
     });
     count++;
   }
-  console.log(count);
   return count;
 };
 
@@ -53,12 +52,12 @@ const bfs = (board, start, target, max_stack_size = width * height) => {
     }
     for (var i = 0; i < 4; i++) {
       const dir = Object.keys(directions)[i];
+      const next = move(current, dir);
+      if (equal(next, target)) {
+        return [...path, next];
+      }
       if (canMove(visited, current, dir)) {
-        const next = move(current, dir);
         queue.push([...path, next]);
-        if (equal(next, target)) {
-          return [...path, next];
-        }
         visited = setPlayerMove(visited, next[0], next[1], 4);
       }
     }
@@ -75,8 +74,11 @@ const lastMove = board => {
 
 //TODO works just for two bots
 const opponentLastMove = board => {
-  return [20, 10];
-  return [...board[board.me === 0 ? 1 : 0]].pop();
+  let possiblePlayers = [0, 1, 2, 3];
+  possiblePlayers = possiblePlayers.filter(
+    i => i !== board.me && board[i].length > 0
+  );
+  return [...board[possiblePlayers.pop()]].pop();
 };
 
 const canMove = (board, node, direction) => {
@@ -95,22 +97,29 @@ const directions = {
 
 let actualDirection = "LEFT";
 
-const sortByFloodFill = (board, list) =>
-  list.sort((moveA, moveB) => {
-    const areaA = floodFill(board, move(lastMove(board), moveA));
-    const areaB = floodFill(board, move(lastMove(board), moveB));
-    return areaA - areaB;
-  });
-
-const nextStep = board => {
-  const move = getMovementToTarget(
+const sortByFloodFill = (board, list) => {
+  const movement = getMovementToTarget(
     board,
     lastMove(board),
     opponentLastMove(board)
   );
-  if (move) {
-    return move;
-  }
+  return list.sort((moveA, moveB) => {
+    const areaA = floodFill(board, move(lastMove(board), moveA));
+    const areaB = floodFill(board, move(lastMove(board), moveB));
+    if (areaA === areaB) {
+      if (moveA === movement) {
+        return -1;
+      } else if (moveB === movement) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+    return areaA - areaB;
+  });
+};
+
+const nextStep = board => {
   const next = directions[actualDirection].filter(m =>
     canMove(board, lastMove(board), m)
   );

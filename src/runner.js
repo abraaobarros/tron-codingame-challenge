@@ -12,13 +12,15 @@ export const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
 export const clearPlayer = (board, player) => {
+  board[player] = [];
   board.occupied = board.occupied.map(i => (i === player ? "." : i));
   return board;
 };
 
 export const setPlayerMove = (board, X, Y, player) => {
-  if (X === -1 || Y === -1) {
-    board = clearPlayer(player);
+  if (X === -1 && Y === -1) {
+    board = clearPlayer(board, player);
+    return board;
   }
   board[player].push([X, Y]);
   board.occupied[X + Y * width] = player;
@@ -28,6 +30,7 @@ export const setPlayerMove = (board, X, Y, player) => {
 
 export const isOccupied = board => ([X, Y]) =>
   board.occupied[X + Y * width] !== ".";
+
 export const cloneBoard = board => ({
   ...board,
   occupied: [...board.occupied]
@@ -65,7 +68,7 @@ export const run = streamer => nextStep => {
       board = setPlayerMove(board, X0, Y0, player);
       board = setPlayerMove(board, X1, Y1, player);
     }
-    console.error(printBoard(board));
     nextStep(board);
+    console.error(printBoard(board));
   }
 };
