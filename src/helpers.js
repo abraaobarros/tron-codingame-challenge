@@ -1,6 +1,6 @@
 import { height, width } from "./contants";
 
-let _nextStep = "UP";
+let _nextStep = "RIGHT";
 export const setNextStep = nextStep => {
   _nextStep = nextStep;
 };
@@ -44,7 +44,7 @@ export const move = ([x, y], step) => {
   return [x, y];
 };
 
-const sleep = time => {
+export const sleep = time => {
   let c = 0;
   for (var i = 0; i < time * 100000000; i++) {
     c++;

@@ -14,41 +14,50 @@ const myPlayerNumber = (linestream = "") => {
 const getPlayerMove = (linestream = "") =>
   linestream.split(" ").map(coordinate => parseInt(coordinate));
 
-const setPlayerMove = (X, Y, player) => {
-  board[player].push([X, Y]);
-  board.occupied = board.occupied.map((item, index) => {
-    if (index === X + Y * width) {
-      if (board.occupied[index] !== ".") {
-        console.error("Essa casa já foi preenchida");
-        return player;
-      }
-      return player;
-    }
-    return item;
-  });
+const clearPlayer = (board, player) => {
+  board[player] = [];
+  board.occupied = board.occupied.map(i => (i === player ? "." : i));
+  return board;
 };
 
-const isOccupied = ([X, Y]) => board.occupied[X + Y * width] !== ".";
+const setPlayerMove = (board, X, Y, player) => {
+  if (X === -1 && Y === -1) {
+    board = clearPlayer(board, player);
+    return board;
+  }
+  board[player].push([X, Y]);
+  board.occupied[X + Y * width] = player;
+
+  return board;
+};
+
+const isOccupied = board => ([X, Y]) =>
+  board.occupied[X + Y * width] !== ".";
+
+const cloneBoard = board => ({
+  ...board,
+  occupied: [...board.occupied]
+});
 var board = {
   0: [],
   1: [],
   2: [],
   3: [],
+  4: [],
   me: 0,
-  occupied: new Array(width * height).fill("."),
-  isOccupied: isOccupied
+  occupied: new Array(width * height).fill(".")
 };
 
-const printBoard = () => {
+const printBoard = board => {
   var print = "";
   for (let h = 0; h < height; h++) {
-    print += printRow(h);
+    print += printRow(board, h);
     print += "\n";
   }
   return print;
 };
 
-const printRow = y => {
+const printRow = (board, y) => {
   const line = board.occupied.slice(y * width, (y + 1) * width).join("");
   return line;
 };
@@ -59,15 +68,15 @@ const run = streamer => nextStep => {
     board.me = myPlayerNumber(line);
     for (let player = 0; player < getNumberPlayers(line); player++) {
       const [X0, Y0, X1, Y1] = getPlayerMove(streamer());
-      setPlayerMove(X0, Y0, player);
-      setPlayerMove(X1, Y1, player);
+      board = setPlayerMove(board, X0, Y0, player);
+      board = setPlayerMove(board, X1, Y1, player);
     }
-    console.error(printBoard());
     nextStep(board);
+    console.error(printBoard(board));
   }
 };
 
-let _nextStep = "UP";
+let _nextStep = "RIGHT";
 const setNextStep = nextStep => {
   _nextStep = nextStep;
 };
@@ -118,43 +127,68 @@ const sleep = time => {
   console.log(c);
 };
 
-const distance = (A, B) => {
-  return Math.abs(A[0] - B[0] + A[1] - B[1]);
-};
-
 const isOutBoard = node => {
   return node[0] < 0 || node[1] < 0 || node[0] >= width || node[1] >= height;
 };
 
 const willCollide = (board, node) => {
-  return board.isOccupied(node);
+  return isOccupied(board)(node);
 };
 
-const inside = (list, node) =>
-  list.filter(n => n[0] + n[1] * width === node[0] + node[1] * width).length !==
-  0;
-
-const floodFill = (board, node, max_queue_size = 700) => {
-  let queue = [];
-  let visited = [];
-  queue.push(node);
-  while (queue.length !== 0) {
-    let actual = queue.pop();
-    let possibilities = Object.keys(directions).filter(dir =>
-      canMove(board, actual, dir)
-    );
-    possibilities.map(item => {
-      const next = move(actual, item);
-      if (!inside(visited, next)) {
-        queue.push(next);
+const floodFill = (board, node, max_stack_size = 700) => {
+  let stack = [];
+  let visited = cloneBoard(board);
+  let count = 0;
+  stack.push(node);
+  while (stack.length !== 0) {
+    let actual = stack.pop();
+    visited = setPlayerMove(visited, actual[0], actual[1], 4);
+    Object.keys(directions).map(dir => {
+      if (canMove(visited, actual, dir)) {
+        const next = move(actual, dir);
+        stack.push(next);
+        visited = setPlayerMove(visited, actual[0], actual[1], 4);
       }
     });
-    visited.push(actual);
-    if (visited.length > max_queue_size) {
-      return max_queue_size;
+    count++;
+  }
+  return count;
+};
+
+const equal = (nodeA, nodeB) => {
+  try {
+    return nodeA[0] === nodeB[0] && nodeA[1] === nodeB[1];
+  } catch (e) {
+    return false;
+  }
+};
+
+const bfs = (board, start, target, max_stack_size = width * height) => {
+  var queue = [];
+  var visited = cloneBoard(board);
+  queue.push([start]);
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const current = [...path].pop();
+    if (equal(current, target)) {
+      return path;
+    }
+    for (var i = 0; i < 4; i++) {
+      const dir = Object.keys(directions)[i];
+      const next = move(current, dir);
+      if (equal(next, target)) {
+        return [...path, next];
+      }
+      if (canMove(visited, current, dir)) {
+        queue.push([...path, next]);
+        visited = setPlayerMove(visited, next[0], next[1], 4);
+      }
+    }
+    if (queue.length > max_stack_size) {
+      return -1;
     }
   }
-  return visited.length;
+  return -1;
 };
 
 const lastMove = board => {
@@ -163,7 +197,11 @@ const lastMove = board => {
 
 //TODO works just for two bots
 const opponentLastMove = board => {
-  return [...board[board.me === 0 ? 1 : 0]].pop();
+  let possiblePlayers = [0, 1, 2, 3];
+  possiblePlayers = possiblePlayers.filter(
+    i => i !== board.me && board[i].length > 0
+  );
+  return [...board[possiblePlayers.pop()]].pop();
 };
 
 const canMove = (board, node, direction) => {
@@ -180,30 +218,31 @@ const directions = {
   LEFT: ["DOWN", "LEFT", "UP"]
 };
 
-let actualDirection = null;
+let actualDirection = "LEFT";
 
-const chooseBetterDirection = (board, moveA, moveB) => {
-  if (!opponentLastMove(board)) return 0;
-  const distA = distance(move(lastMove(board), moveA), opponentLastMove(board));
-  const distB = distance(move(lastMove(board), moveB), opponentLastMove(board));
-  return distB - distA;
-};
-
-const sortByFloodFill = (board, list) =>
-  list.sort((moveA, moveB) => {
+const sortByFloodFill = (board, list) => {
+  const movement = getMovementToTarget(
+    board,
+    lastMove(board),
+    opponentLastMove(board)
+  );
+  return list.sort((moveA, moveB) => {
     const areaA = floodFill(board, move(lastMove(board), moveA));
     const areaB = floodFill(board, move(lastMove(board), moveB));
     if (areaA === areaB) {
-      return chooseBetterDirection(board, moveA, moveB);
+      if (moveA === movement) {
+        return -1;
+      } else if (moveB === movement) {
+        return 1;
+      } else {
+        return 0;
+      }
     }
     return areaA - areaB;
   });
+};
 
 const nextStep = board => {
-  if (!actualDirection) {
-    actualDirection = "LEFT";
-    return actualDirection;
-  }
   const next = directions[actualDirection].filter(m =>
     canMove(board, lastMove(board), m)
   );
@@ -211,13 +250,22 @@ const nextStep = board => {
   return actualDirection;
 };
 
+const getMovementToTarget = (board, node, target) => {
+  const path = bfs(board, node, target);
+  if (!path) return null;
+  let possibilities = Object.keys(directions).filter(dir =>
+    equal(move(node, dir), path[1])
+  );
+  return possibilities.pop();
+};
+
 var bot = { nextStep };
 
 let nextStep$1 = "UP";
 
-const gen = rl(10, 20);
+const gen = rl(19, 19);
 
-const streamer =  () => gen.next().value ;
+const streamer =  () => readline();
 
 run(streamer)(board => {
   nextStep$1 = bot.nextStep(board);
