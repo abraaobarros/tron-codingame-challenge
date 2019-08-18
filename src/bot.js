@@ -2,6 +2,15 @@ import { isOutBoard, move, distance, sleep } from "./helpers";
 import { width, height } from "./contants";
 import { setPlayerMove, printBoard, cloneBoard, isOccupied } from "./runner";
 
+const directions = {
+  UP: ["RIGHT", "LEFT", "UP"],
+  DOWN: ["RIGHT", "DOWN", "LEFT"],
+  RIGHT: ["DOWN", "UP", "RIGHT"],
+  LEFT: ["DOWN", "LEFT", "UP"]
+};
+
+let actualDirection = "LEFT";
+
 const willCollide = (board, node) => {
   return isOccupied(board)(node);
 };
@@ -87,15 +96,6 @@ const canMove = (board, node, direction) => {
     !willCollide(board, move(node, direction))
   );
 };
-
-const directions = {
-  UP: ["RIGHT", "LEFT", "UP"],
-  DOWN: ["RIGHT", "DOWN", "LEFT"],
-  RIGHT: ["DOWN", "UP", "RIGHT"],
-  LEFT: ["DOWN", "LEFT", "UP"]
-};
-
-let actualDirection = "LEFT";
 
 const sortByFloodFill = (board, list) => {
   const movement = getMovementToTarget(
